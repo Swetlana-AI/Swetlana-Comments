@@ -1,16 +1,17 @@
 import os
 from openai import OpenAI
+import os
 
-# Load secrets from GitHub Actions environment
+# === Load secrets from GitHub Actions environment ===
 client = OpenAI(
     api_key=os.environ["DASHSCOPE_API_KEY"],
     base_url=os.environ.get("BASE_URL")  # optional if using default
 )
 
 MODEL = os.environ["MODEL"]
-SYSTEM_PROMPT = os.environ["SYSTEM_PROMPT"]  # Swetlana Brain prompt
+SYSTEM_PROMPT = os.environ["SYSTEM_PROMPT"]  # your Swetlana-style prompt
 
-
+# === Load knowledge base ===
 def load_docs(knowledge_folder="knowledge"):
     """Load all .md files in the knowledge folder."""
     text = ""
@@ -21,13 +22,14 @@ def load_docs(knowledge_folder="knowledge"):
                     text += file.read() + "\n\n"
     return text
 
-
 DOCS = load_docs()
 
-
-def generate_sw_comment(title: str, summary: str) -> str:
+# === Generate Swetlana-style commentary ===
+def generate_sw_comment(title: str, summary: str, url: str = "") -> str:
     """
     Generate a Swetlana-style comment for a news item.
+    Uses knowledge from style.md, examples.md, notes.md.
+    Limits output to ~1200 characters or 250 words.
     """
     prompt = f"""
 {SYSTEM_PROMPT}
@@ -38,23 +40,26 @@ def generate_sw_comment(title: str, summary: str) -> str:
 ### News Item
 Title: {title}
 Summary: {summary}
+URL: {url}
 
-Provide a concise, insightful, and reflective commentary in Swetlana's style.
+Please produce a **concise, reflective, insightful commentary** in Swetlana's style.
+- Limit output to roughly 1200 characters (~250 words)
+- Keep tone analytical, occasionally playful
+- Highlight significance, patterns, implications
 """
-    try:
-        resp = client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=300
-        )
-        return resp.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"[ERROR] LLM call failed: {e}")
-        return f"Could not generate comment for '{title}'."
+
+    resp = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=400  # token limit (~300-400 tokens ~ 250 words)
+    )
+
+    return resp.choices[0].message.content.strip()
 
 
-# Example usage for local testing
+# === Optional: local testing ===
 if __name__ == "__main__":
     test_title = "Dario Amodei joins OpenAI"
     test_summary = "Former Anthropic co-founder moves to OpenAI to lead AI safety projects."
-    print(generate_sw_comment(test_title, test_summary))
+    test_url = "https://news.example.com/dario-amodei"
+    print(generate_sw_comment(test_title, test_summary, test_url))
