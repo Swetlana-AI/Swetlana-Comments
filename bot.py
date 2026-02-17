@@ -8,7 +8,7 @@ client = OpenAI(
 )
 
 MODEL = os.environ["MODEL"]
-SYSTEM_PROMPT = os.environ["SYSTEM_PROMPT"]  # Your Swetlana Brain prompt (keep secret!)
+SYSTEM_PROMPT = os.environ["SYSTEM_PROMPT"]  # br. prompt
 
 import os
 
