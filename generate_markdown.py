@@ -4,7 +4,7 @@ from datetime import date
 import subprocess
 
 # === CONFIG ===
-RSS_URL = 'https://news.google.com/rss/search?q="Sam+Altman"+OR+"Dario+Amodei"+OR+"OpenAI"+OR+"Anthropic"'
+RSS_URL = 'https://news.google.com/rss/search?q="Sam+Altman"+OR+"Dario+Amodei"+OR+"OpenAI"+OR+"Anthropic"+OR+"Andrej+Karpathy"+OR+"Grok"+OR+"Claude"+OR+"DeepMind"+OR+"Ilya+Sutskever"'
 MAX_POSTS = 2
 
 # === Fetch news ===
