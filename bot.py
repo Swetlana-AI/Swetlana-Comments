@@ -3,7 +3,7 @@ from openai import OpenAI
 
 # Load secrets from GitHub Actions environment
 client = OpenAI(
-    api_key=os.environ["LLM_API_KEY"],
+    api_key=os.environ["DASHSCOPE_API_KEY"],
     base_url=os.environ.get("BASE_URL")  # optional if using default
 )
 
