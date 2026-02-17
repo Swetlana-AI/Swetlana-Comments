@@ -1,0 +1,31 @@
+name: Daily Swetlana Comments
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 9am UTC every day
+  workflow_dispatch:      # allows manual trigger
+
+jobs:
+  post-daily-comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install openai feedparser python-dotenv
+
+      - name: Run Swetlana Bot
+        run: python generate_markdown.py
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+          MODEL: ${{ secrets.MODEL }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          SYSTEM_PROMPT: ${{ secrets.SYSTEM_PROMPT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # for commits
