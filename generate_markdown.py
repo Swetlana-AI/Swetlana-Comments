@@ -1,61 +1,49 @@
-import os
-from datetime import datetime
-from bot import generate_sw_comment  # your function from bot.py
+import feedparser
+from bot import generate_sw_comment  # your updated bot.py
+from datetime import date
+import subprocess
 
 # === CONFIG ===
-TOPICS = [
-    "Dario Amodei",
-    "Sam Altman",
-    "OpenAI",
-    "Anthropic",
-    "Andrej Karpathy",
-    "Grok"
-]
-DAILY_LIMIT = 2  # max posts per day
+RSS_URL = 'https://news.google.com/rss/search?q="Sam+Altman"+OR+"Dario+Amodei"+OR+"OpenAI"+OR+"Anthropic"'
+MAX_POSTS = 2
 
-# === MOCK NEWS FETCHER ===
-# Replace this with your RSS fetcher / API
-def fetch_news(topics, limit=DAILY_LIMIT):
-    """
-    Fetch news for given topics. 
-    Returns a list of dicts: [{"title": ..., "summary": ..., "url": ...}, ...]
-    """
-    # Example: dummy news for testing
-    return [
-        {
-            "title": "Dario Amodei joins OpenAI",
-            "summary": "Former Anthropic co-founder moves to OpenAI to lead AI safety projects.",
-            "url": "https://news.example.com/dario-amodei"
-        },
-        {
-            "title": "Sam Altman talks AI regulation",
-            "summary": "OpenAI CEO discusses safety and governance in AI at a conference.",
-            "url": "https://news.example.com/sam-altman"
-        }
-    ][:limit]
+# === Fetch news ===
+feed = feedparser.parse(RSS_URL)
+entries = feed.entries[:MAX_POSTS]  # limit to 2 posts
 
-# === MAIN SCRIPT ===
-def main():
-    articles = fetch_news(TOPICS, DAILY_LIMIT)
+if not entries:
+    print("No news items found today.")
+    exit(0)
 
-    if not articles:
-        print("No news articles found for today.")
-        return
+# === Generate markdown content ===
+today = date.today().isoformat()
+file_name = f"news-{today}.md"
 
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
-    output_file = f"news-{today_str}.md"
+content_lines = [f"# Swetlana Daily Comments — {today}\n"]
 
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(f"# Swetlana Bot - Daily Commentary {today_str}\n\n")
+for entry in entries:
+    title = entry.title
+    summary = getattr(entry, "summary", "")  # some feeds may have summary
+    url = entry.link
+    comment = generate_sw_comment(title, summary, url)
 
-        for article in articles:
-            comment = generate_sw_comment(article["title"], article["summary"], article.get("url", ""))
-            f.write(f"## {article['title']}\n\n")
-            f.write(f"[Read full article here]({article['url']})\n\n")
-            f.write(f"{comment}\n\n---\n\n")
+    content_lines.append(f"## {title}\n")
+    content_lines.append(f"**Link:** {url}\n")
+    content_lines.append(f"**Summary:** {summary}\n")
+    content_lines.append(f"**Swetlana Commentary:**\n{comment}\n")
+    content_lines.append("---\n")
 
-    print(f"Daily file generated: {output_file}")
+content = "\n".join(content_lines)
 
+# === Save markdown file ===
+with open(file_name, "w", encoding="utf-8") as f:
+    f.write(content)
 
-if __name__ == "__main__":
-    main()
+print(f"Daily file generated: {file_name}")
+
+# === Commit & push to GitHub ===
+subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
+subprocess.run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True)
+subprocess.run(["git", "add", file_name], check=True)
+subprocess.run(["git", "commit", "-m", f"Daily Swetlana Comments update: {today}"], check=True)
+subprocess.run(["git", "push", "origin", "main"], check=True)
