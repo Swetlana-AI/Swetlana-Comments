@@ -28,4 +28,13 @@ jobs:
           MODEL: ${{ secrets.MODEL }}
           BASE_URL: ${{ secrets.BASE_URL }}
           SYSTEM_PROMPT: ${{ secrets.SYSTEM_PROMPT }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # for commits
+
+      - name: Commit generated news.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add news.md
+          git commit -m "Daily Swetlana Comments update" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
